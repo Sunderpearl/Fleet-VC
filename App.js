@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StatusBar, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { registerRootComponent } from 'expo';
 import { AuthProvider, useAuth } from './src/auth';
 import { C } from './src/theme';
 import { T, Btn } from './src/ui';
@@ -71,3 +72,5 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+registerRootComponent(App);

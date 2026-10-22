@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import * as LocalAuth from 'expo-local-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api, setTokens, API_URL, MOCK } from './api';
+import { storage } from './storage';
 
 WebBrowser.maybeCompleteAuthSession();
 const Ctx = createContext();
@@ -19,11 +19,11 @@ export function AuthProvider({ children }) {
 
   const save = async (s) => {
     setTokens(s);
-    await SecureStore.setItemAsync('session', JSON.stringify(s));
+    await storage.setItem('session', JSON.stringify(s));
     setUser(s.user);
   };
   const restore = async () => {
-    const raw = await SecureStore.getItemAsync('session');
+    const raw = await storage.getItem('session');
     if (!raw) throw new Error('Belum ada sesi tersimpan. Masuk dengan email dulu.');
     if ((await bioOk()) && !(await unlock())) throw new Error('Verifikasi biometrik gagal');
     const s = JSON.parse(raw); setTokens(s); setUser(s.user);
@@ -43,8 +43,7 @@ export function AuthProvider({ children }) {
       await save({ user: await api.me(), access: p.get('access'), refresh: p.get('refresh') });
     },
     logout: async () => {
-      // Bersihkan semua: session, offline queue, token state
-      await SecureStore.deleteItemAsync('session');
+      await storage.deleteItem('session');
       await AsyncStorage.removeItem('queue');
       setTokens(null);
       setUser(null);

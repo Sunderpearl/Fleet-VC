@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { storage } from './storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Tanpa EXPO_PUBLIC_API_URL, app berjalan dengan data contoh (mock).
@@ -47,8 +47,8 @@ async function req(path, { method = 'GET', body, auth = true } = {}) {
           if (rr.ok) {
             const newTokens = await rr.json();
             tokens = newTokens;
-            const s = JSON.parse((await SecureStore.getItemAsync('session')) || '{}');
-            await SecureStore.setItemAsync('session', JSON.stringify({ ...s, ...newTokens }));
+            const s = JSON.parse((await storage.getItem('session')) || '{}');
+            await storage.setItem('session', JSON.stringify({ ...s, ...newTokens }));
             return true;
           }
           return false;

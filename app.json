@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Fleet",
+    "slug": "fleet-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "fleet",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fleet.pos",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Gunakan Face ID untuk membuka Fleet"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F172A"
+      },
+      "package": "com.fleet.pos"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-local-authentication",
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}

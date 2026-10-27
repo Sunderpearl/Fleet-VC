@@ -10,18 +10,30 @@ import Dashboard from './src/screens/Dashboard';
 import POS from './src/screens/POS';
 import Inventory from './src/screens/Inventory';
 
+import { IconDashboard, IconPOS, IconInventory, IconAccount, IconPlus } from './src/icons';
+
 function Account() {
   const { user, logout } = useAuth();
   return (
-    <View style={{ padding: 20, gap: 12 }}>
-      <T s={24} w="800">Akun</T>
-      <T>{user?.name}</T><T c={C.mute}>Role: {user?.role}</T>
+    <View style={{ padding: 20, gap: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <IconAccount size={26} color={C.green} />
+        <T s={24} w="800">Akun</T>
+      </View>
+      <T s={18} w="700">{user?.name}</T>
+      <T c={C.mute}>Role: {user?.role}</T>
       <Btn ghost title="Keluar" onPress={logout} />
     </View>
   );
 }
 
-const TABS = [['dash', '📊', 'Dashboard', Dashboard], ['pos', '🧾', 'POS', POS], null, ['inv', '📦', 'Inventory', Inventory], ['acc', '⚙️', 'Akun', Account]];
+const TABS = [
+  ['dash', IconDashboard, 'Dashboard', Dashboard],
+  ['pos', IconPOS, 'POS', POS],
+  null,
+  ['inv', IconInventory, 'Inventory', Inventory],
+  ['acc', IconAccount, 'Akun', Account],
+];
 
 function Shell() {
   const { user, ready } = useAuth();
@@ -37,28 +49,51 @@ function Shell() {
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flex: 1 }}><Screen /></View>
       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, paddingVertical: 8, paddingBottom: Platform.OS === 'android' ? 8 : 4 }}>
-        {TABS.map((t, i) => t ? (
-          <TouchableOpacity
-            key={t[0]}
-            onPress={() => setTab(t[0])}
-            accessibilityRole="tab"
-            accessibilityLabel={t[2]}
-            accessibilityState={{ selected: tab === t[0] }}
-            style={{ flex: 1, alignItems: 'center', minHeight: 44 }}
-          >
-            <T s={18}>{t[1]}</T><T s={10} c={tab === t[0] ? C.green : C.mute}>{t[2]}</T>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            key={i}
-            onPress={() => setTab('pos')}
-            accessibilityRole="button"
-            accessibilityLabel="Transaksi Baru"
-            style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center', marginTop: -24, elevation: 8, shadowColor: C.green, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}
-          >
-            <T s={28} w="700">+</T>
-          </TouchableOpacity>
-        ))}
+        {TABS.map((t, i) => {
+          if (!t) {
+            return (
+              <TouchableOpacity
+                key={i}
+                onPress={() => setTab('pos')}
+                accessibilityRole="button"
+                accessibilityLabel="Transaksi Baru"
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 18,
+                  backgroundColor: C.green,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: -24,
+                  elevation: 8,
+                  shadowColor: C.green,
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 4 },
+                }}
+              >
+                <IconPlus size={26} color="#FFFFFF" strokeWidth={3} />
+              </TouchableOpacity>
+            );
+          }
+          const IconComp = t[1];
+          const active = tab === t[0];
+          return (
+            <TouchableOpacity
+              key={t[0]}
+              onPress={() => setTab(t[0])}
+              accessibilityRole="tab"
+              accessibilityLabel={t[2]}
+              accessibilityState={{ selected: active }}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 46 }}
+            >
+              <IconComp size={20} color={active ? C.green : C.mute} strokeWidth={active ? 2.5 : 2} />
+              <T s={10} w={active ? '700' : '500'} c={active ? C.green : C.mute} style={{ marginTop: 4 }}>
+                {t[2]}
+              </T>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </SafeAreaView>
   );
@@ -175,8 +210,8 @@ function IPhoneFrame({ children }) {
 
       {/* Label Badge */}
       <View style={{ marginTop: 10, opacity: 0.7 }}>
-        <T s={11} w="600" c={C.mute} style={{ letterSpacing: 1 }}>
-          📱 iPhone 18 Pro Max • 440 × 956
+        <T s={11} w="600" c={C.mute} style={{ letterSpacing: 1.5 }}>
+          IPHONE 18 PRO MAX • 440 × 956
         </T>
       </View>
     </View>

@@ -4,6 +4,8 @@ import { C, rp } from '../theme';
 import { Card, T, Btn } from '../ui';
 import { api, syncQueue } from '../api';
 
+import { IconStore, IconChevronDown, IconSnowflake, IconAlert } from '../icons';
+
 export default function Dashboard() {
   const [d, setD] = useState(null);
   const [holiday, setHoliday] = useState(false);
@@ -51,14 +53,42 @@ export default function Dashboard() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.green} colors={[C.green]} />}
     >
       <T s={11} c={C.mute} w="700">CURRENT BRANCH</T>
-      <T s={18} w="700">Flagship Store ⌄</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <IconStore size={20} color={C.green} />
+        <T s={18} w="700">Flagship Store</T>
+        <IconChevronDown size={14} color={C.mute} />
+      </View>
 
       <View style={{ flexDirection: 'row', backgroundColor: C.card, borderRadius: 14, padding: 4 }}>
-        {[['Regular', false], ['❄ Holiday Peak', true]].map(([t, v]) => (
-          <TouchableOpacity key={t} onPress={() => setHoliday(v)} style={{ flex: 1, padding: 10, borderRadius: 10, alignItems: 'center', backgroundColor: holiday === v ? C.line : 'transparent' }}>
-            <T w="600" c={holiday === v ? C.text : C.mute}>{t}</T>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          onPress={() => setHoliday(false)}
+          style={{
+            flex: 1,
+            padding: 10,
+            borderRadius: 10,
+            alignItems: 'center',
+            backgroundColor: !holiday ? C.line : 'transparent',
+          }}
+        >
+          <T w="600" c={!holiday ? C.text : C.mute}>Regular</T>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setHoliday(true)}
+          style={{
+            flex: 1,
+            padding: 10,
+            borderRadius: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            backgroundColor: holiday ? C.line : 'transparent',
+          }}
+        >
+          <IconSnowflake size={14} color={holiday ? C.text : C.mute} />
+          <T w="600" c={holiday ? C.text : C.mute}>Holiday Peak</T>
+        </TouchableOpacity>
       </View>
 
       <View style={{ backgroundColor: C.green, borderRadius: 24, padding: 20 }}>
@@ -98,7 +128,10 @@ export default function Dashboard() {
           <Card key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', borderLeftWidth: low ? 4 : 1, borderLeftColor: low ? C.amber : C.line }}>
             <View>
               <T w="700">{p.name}</T>
-              <T s={11} c={low ? C.amber : C.green}>{low ? 'Low Stock' : 'In Stock'} • {p.sku}</T>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                {low && <IconAlert size={12} color={C.amber} />}
+                <T s={11} c={low ? C.amber : C.green}>{low ? 'Low Stock' : 'In Stock'} • {p.sku}</T>
+              </View>
             </View>
             <View style={{ alignItems: 'flex-end' }}><T w="700">{p.sold} Sold</T><T s={11} c={C.green}>{rp(p.revenue)}</T></View>
           </Card>

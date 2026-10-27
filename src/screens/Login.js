@@ -7,6 +7,8 @@ import { useAuth } from '../auth';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+import { IconZap, IconCrown, IconCashier, IconEye, IconEyeOff, IconGoogle, IconFingerprint } from '../icons';
+
 export default function Login() {
   const { signIn, google, biometric } = useAuth();
   const [role, setRole] = useState('OWNER');
@@ -37,24 +39,47 @@ export default function Login() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView contentContainerStyle={{ padding: 24, gap: 12 }} keyboardShouldPersistTaps="handled">
-        <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}><T s={28}>⚡</T></View>
+        <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
+          <IconZap size={28} color="#FFFFFF" fill="#FFFFFF" />
+        </View>
         <T s={30} w="800">Welcome Back</T>
         <T c={C.mute}>Masuk untuk mengelola penjualan & analitik</T>
 
         {label('ACCESS ROLE')}
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          {['OWNER', 'CASHIER'].map((r) => (
-            <TouchableOpacity
-              key={r}
-              onPress={() => setRole(r)}
-              accessibilityRole="button"
-              accessibilityLabel={`Pilih role ${r}`}
-              accessibilityState={{ selected: role === r }}
-              style={{ flex: 1, padding: 14, borderRadius: 14, alignItems: 'center', backgroundColor: C.card, borderWidth: 1.5, borderColor: role === r ? C.green : C.line, minHeight: 48 }}
-            >
-              <T w="600" c={role === r ? C.text : C.mute}>{r === 'OWNER' ? '👑 Owner' : '🧾 Cashier'}</T>
-            </TouchableOpacity>
-          ))}
+          {['OWNER', 'CASHIER'].map((r) => {
+            const isOwner = r === 'OWNER';
+            const selected = role === r;
+            return (
+              <TouchableOpacity
+                key={r}
+                onPress={() => setRole(r)}
+                accessibilityRole="button"
+                accessibilityLabel={`Pilih role ${r}`}
+                accessibilityState={{ selected }}
+                style={{
+                  flex: 1,
+                  padding: 14,
+                  borderRadius: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  backgroundColor: C.card,
+                  borderWidth: 1.5,
+                  borderColor: selected ? C.green : C.line,
+                  minHeight: 48,
+                }}
+              >
+                {isOwner ? (
+                  <IconCrown size={18} color={selected ? C.amber : C.mute} />
+                ) : (
+                  <IconCashier size={18} color={selected ? C.green : C.mute} />
+                )}
+                <T w="600" c={selected ? C.text : C.mute}>{isOwner ? 'Owner' : 'Cashier'}</T>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {label('EMAIL')}
@@ -96,7 +121,7 @@ export default function Login() {
             accessibilityLabel={show ? 'Sembunyikan password' : 'Tampilkan password'}
             style={{ position: 'absolute', right: 14, top: 10, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
           >
-            <T>{show ? '🙈' : '👁'}</T>
+            {show ? <IconEyeOff size={20} color={C.mute} /> : <IconEye size={20} color={C.mute} />}
           </TouchableOpacity>
         </View>
 
@@ -108,8 +133,51 @@ export default function Login() {
         />
         <T s={11} c={C.mute} style={{ textAlign: 'center', marginVertical: 6 }}>ATAU LANJUTKAN DENGAN</T>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Btn ghost title="Google" onPress={run(google)} disabled={busy} style={{ flex: 1 }} />
-          <Btn ghost title="FaceID / TouchID" onPress={run(biometric)} disabled={busy} style={{ flex: 1 }} />
+          <TouchableOpacity
+            onPress={run(google)}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="Masuk dengan Google"
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              backgroundColor: C.card,
+              borderRadius: 14,
+              paddingVertical: 14,
+              borderWidth: 1,
+              borderColor: C.line,
+              minHeight: 48,
+            }}
+          >
+            <IconGoogle size={18} />
+            <T w="700" c={C.text}>Google</T>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={run(biometric)}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="Masuk dengan Biometrik"
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              backgroundColor: C.card,
+              borderRadius: 14,
+              paddingVertical: 14,
+              borderWidth: 1,
+              borderColor: C.line,
+              minHeight: 48,
+            }}
+          >
+            <IconFingerprint size={18} color={C.text} />
+            <T w="700" c={C.text}>Biometrik</T>
+          </TouchableOpacity>
         </View>
         <T c={C.mute} style={{ textAlign: 'center', marginTop: 16 }}>Toko baru? <T w="700" c={C.green}>Hubungi Sales</T></T>
         <T s={10} c={C.line} style={{ textAlign: 'center' }}>SYSTEM VERSION 1.0.0 • ENTERPRISE CLOUD</T>

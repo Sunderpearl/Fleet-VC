@@ -4,6 +4,8 @@ import { C, rp } from '../theme';
 import { Card, T } from '../ui';
 import { api, sendOrder } from '../api';
 
+import { IconPlus, IconMinus, IconAlert, IconSearch, IconArrowRight } from '../icons';
+
 export default function POS() {
   const [items, setItems] = useState([]);
   const [q, setQ] = useState('');
@@ -64,9 +66,10 @@ export default function POS() {
   const renderItem = useCallback(({ item: p }) => (
     <Card style={{ flex: 1, margin: 6, gap: 6 }}>
       {p.stock <= 10 && (
-        <T s={10} w="800" c={C.bg} style={{ backgroundColor: C.amber, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-          ⚠ {p.stock} LEFT
-        </T>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.amber, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+          <IconAlert size={11} color={C.bg} />
+          <T s={10} w="800" c={C.bg}>{p.stock} LEFT</T>
+        </View>
       )}
       <T w="700">{p.name}</T>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -78,7 +81,7 @@ export default function POS() {
               accessibilityLabel={`Kurangi ${p.name}`}
               style={{ backgroundColor: C.line, borderRadius: 10, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}
             >
-              <T c={C.red} w="800">−</T>
+              <IconMinus size={16} color={C.red} strokeWidth={2.5} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -86,7 +89,11 @@ export default function POS() {
             accessibilityLabel={`Tambah ${p.name}`}
             style={{ backgroundColor: C.line, borderRadius: 10, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}
           >
-            <T c={C.green} w="800">{cart[p.id] || '+'}</T>
+            {cart[p.id] ? (
+              <T c={C.green} w="800">{cart[p.id]}</T>
+            ) : (
+              <IconPlus size={16} color={C.green} strokeWidth={2.5} />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -99,14 +106,17 @@ export default function POS() {
     <View style={{ flex: 1 }}>
       <View style={{ padding: 20, paddingBottom: 8, gap: 12 }}>
         <T s={24} w="800">New Sale</T>
-        <TextInput
-          value={q}
-          onChangeText={setQ}
-          placeholder="Cari produk atau SKU…"
-          placeholderTextColor={C.mute}
-          accessibilityLabel="Cari produk"
-          style={{ backgroundColor: C.card, borderRadius: 14, padding: 14, color: C.text, borderWidth: 1, borderColor: C.line }}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 14, paddingHorizontal: 14, borderWidth: 1, borderColor: C.line }}>
+          <IconSearch size={18} color={C.mute} />
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder="Cari produk atau SKU…"
+            placeholderTextColor={C.mute}
+            accessibilityLabel="Cari produk"
+            style={{ flex: 1, padding: 14, color: C.text, fontSize: 14 }}
+          />
+        </View>
       </View>
       <FlatList
         data={list}
@@ -129,9 +139,19 @@ export default function POS() {
             disabled={paying}
             accessibilityRole="button"
             accessibilityLabel="Checkout"
-            style={{ backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 20, paddingVertical: 12, opacity: paying ? 0.5 : 1 }}
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: 16,
+              paddingHorizontal: 20,
+              paddingVertical: 12,
+              opacity: paying ? 0.5 : 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
           >
-            <T w="700" c={C.green}>{paying ? 'Memproses…' : 'Checkout →'}</T>
+            <T w="700" c={C.green}>{paying ? 'Memproses…' : 'Checkout'}</T>
+            {!paying && <IconArrowRight size={16} color={C.green} />}
           </TouchableOpacity>
         </View>
       )}

@@ -46,12 +46,12 @@ export default function Login() {
         <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
           <IconZap size={28} color="#FFFFFF" fill="#FFFFFF" />
         </View>
-        <T s={30} w="800">{registering ? 'Create Account' : 'Welcome Back'}</T>
-        <T c={C.mute}>{registering ? 'Buat akun lokal untuk mulai menggunakan Fleet-VC' : 'Masuk untuk mengelola penjualan & analitik'}</T>
+        <T s={30} w="800">{registering ? 'Buat Akun' : 'Selamat Datang'}</T>
+        <T c={C.mute}>{registering ? 'Buat akun lokal untuk mulai menggunakan Fleet-VC' : 'Masuk untuk mengelola toko dan penjualan'}</T>
 
         {registering && <><T s={11} w="700" c={C.mute}>NAMA LENGKAP</T><TextInput style={input} value={name} onChangeText={setName} placeholder="Nama Anda" placeholderTextColor={C.line} autoCapitalize="words" /></>}
 
-        {label('ACCESS ROLE')}
+        {label('JENIS AKUN')}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {['OWNER', 'CASHIER'].map((r) => {
             const isOwner = r === 'OWNER';
@@ -105,7 +105,7 @@ export default function Login() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {label('PASSWORD')}
           {!registering && <TouchableOpacity onPress={() => Alert.alert('Lupa password', 'Hubungkan ke endpoint reset password backend Anda.')} style={{ minHeight: 44, justifyContent: 'center' }}>
-            <T s={12} w="700" c={C.green}>Forgot Password?</T>
+            <T s={12} w="700" c={C.green}>Lupa password?</T>
           </TouchableOpacity>}
         </View>
         <View>
@@ -132,13 +132,13 @@ export default function Login() {
         </View>
 
         <Btn
-          title={busy ? 'Memproses…' : registering ? 'Create Account' : 'Sign In'}
+          title={busy ? 'Memproses…' : registering ? 'Buat Akun' : 'Masuk'}
           onPress={handleSignIn}
           disabled={busy}
           style={{ marginTop: 8 }}
         />
-        <TouchableOpacity onPress={() => setRegistering(!registering)} style={{ padding: 12, alignItems: 'center' }}><T c={C.green} w="700">{registering ? 'Sudah punya akun? Sign In' : 'Belum punya akun? Create Account'}</T></TouchableOpacity>
-        {!registering && <T s={11} c={C.mute} style={{ textAlign: 'center', marginVertical: 6 }}>ATAU LANJUTKAN DENGAN</T>}
+        <TouchableOpacity onPress={() => setRegistering(!registering)} style={{ padding: 12, alignItems: 'center' }}><T c={C.green} w="700">{registering ? 'Sudah punya akun? Masuk' : 'Belum punya akun? Buat Akun'}</T></TouchableOpacity>
+        {!registering && <T s={11} c={C.mute} style={{ textAlign: 'center', marginVertical: 6 }}>ATAU MASUK DENGAN</T>}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {!registering && <TouchableOpacity
             onPress={run(google)}
@@ -187,7 +187,7 @@ export default function Login() {
           </TouchableOpacity>}
         </View>
         {!registering && <T c={C.mute} style={{ textAlign: 'center', marginTop: 16 }}>Toko baru? <T w="700" c={C.green}>Hubungi Sales</T></T>}
-        <T s={10} c={C.line} style={{ textAlign: 'center' }}>SYSTEM VERSION 1.0.0 • ENTERPRISE CLOUD</T>
+        <T s={10} c={C.line} style={{ textAlign: 'center' }}>FLEET-VC • POINT OF SALE</T>
       </ScrollView>
     </SafeAreaView>
   );

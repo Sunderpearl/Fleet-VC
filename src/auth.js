@@ -38,6 +38,20 @@ export function AuthProvider({ children }) {
       if (!raw) throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
       const session = JSON.parse(raw);
       const nextUser = { ...session.user, ...changes };
+
+      // Keep the active session and the local account registry in sync.
+      // Otherwise a later login reloads the old profile from fleet_users.
+      if (MOCK) {
+        const usersRaw = await storage.getItem('fleet_users');
+        const users = usersRaw ? JSON.parse(usersRaw) : [];
+        const updatedUsers = users.map((account) => {
+          const sameId = session.user?.id && account.id === session.user.id;
+          const sameEmail = account.email?.toLowerCase() === session.user?.email?.toLowerCase();
+          return (sameId || sameEmail) ? { ...account, ...changes } : account;
+        });
+        await storage.setItem('fleet_users', JSON.stringify(updatedUsers));
+      }
+
       await storage.setItem('session', JSON.stringify({ ...session, user: nextUser }));
       setUser(nextUser);
       return nextUser;

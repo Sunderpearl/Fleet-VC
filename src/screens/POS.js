@@ -13,6 +13,7 @@ export default function POS() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const { money } = useStoreSettings();
 
@@ -69,51 +70,102 @@ export default function POS() {
     }
   };
 
-  const renderItem = useCallback(({ item: p }) => (
-    <Card style={{ flex: 1, margin: 6, gap: 6, opacity: Number(p.stock) <= 0 ? 0.5 : 1 }}>
-      {Number(p.stock) <= 10 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.amber, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-          <IconAlert size={11} color={C.bg} />
-          <T s={10} w="800" c={C.bg}>{p.stock} LEFT</T>
+  const renderItem = useCallback(({ item: p }) => {
+    const qty = Number(cart[p.id] || 0);
+    const stock = Number(p.stock || 0);
+    const low = stock > 0 && stock <= Number(p.lowStockAt ?? 10);
+    return (
+      <Card style={{ padding: 14, gap: 10, opacity: stock <= 0 ? 0.55 : 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+          <View style={{ flex: 1, gap: 5 }}>
+            <T s={14} w="800">{p.name}</T>
+            <T s={10} c={C.mute}>{p.sku}</T>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
+              {low && <IconAlert size={12} color={C.amber} />}
+              <T s={11} c={stock <= 0 ? C.red : low ? C.amber : C.mute} w={low || stock <= 0 ? '700' : '400'}>
+                {stock <= 0 ? 'Stok habis' : low ? `Stok menipis · ${stock} tersisa` : `${stock} tersedia`}
+              </T>
+            </View>
+          </View>
+          <View style={{ alignItems: 'flex-end', gap: 7 }}>
+            <T s={15} w="800" c={C.green}>{money(p.price)}</T>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {qty > 0 && (
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Kurangi ${p.name}`} onPress={() => sub(p)}
+                  style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
+                  <IconMinus size={15} color={C.text} />
+                </TouchableOpacity>
+              )}
+              {qty > 0 && <T s={13} w="800">{qty}</T>}
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Tambah ${p.name}`} onPress={() => add(p)} disabled={stock <= qty}
+                style={{ minWidth: 36, height: 34, paddingHorizontal: 10, borderRadius: 10, backgroundColor: stock <= qty ? C.line : C.green, alignItems: 'center', justifyContent: 'center', opacity: stock <= qty ? 0.55 : 1 }}>
+                <IconPlus size={16} color={stock <= qty ? C.mute : '#06281F'} />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      )}
-      <T w="700">{p.name}</T>
-      <T s={10} c={C.mute}>{p.sku}</T>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <T w="700" c={C.green}>{money(p.price)}</T>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {cart[p.id] > 0 && <TouchableOpacity onPress={() => sub(p)} style={{ backgroundColor: C.line, borderRadius: 10, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}><IconMinus size={16} color={C.red} /></TouchableOpacity>}
-          <TouchableOpacity onPress={() => add(p)} disabled={Number(p.stock) <= 0} style={{ backgroundColor: C.line, borderRadius: 10, width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>
-            {cart[p.id] ? <T c={C.green} w="800">{cart[p.id]}</T> : <IconPlus size={16} color={C.green} />}
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Card>
-  ), [cart]);
+      </Card>
+    );
+  }, [cart, items, money]);
 
   if (loading) return <ActivityIndicator color={C.green} style={{ flex: 1, backgroundColor: C.bg }} />;
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ padding: 20, paddingBottom: 8, gap: 12 }}>
-        <T s={24} w="800">New Sale</T>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 14, paddingHorizontal: 14, borderWidth: 1, borderColor: C.line }}>
+      <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 10, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flex: 1, gap: 3 }}>
+            <T s={23} w="800">Buat Transaksi</T>
+            <T s={11} c={C.mute}>Pilih produk untuk ditambahkan ke keranjang.</T>
+          </View>
+          <View style={{ backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 8, alignItems: 'center' }}>
+            <T s={16} w="800" c={C.green}>{count}</T>
+            <T s={9} c={C.mute}>UNIT</T>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 13, paddingHorizontal: 13, borderWidth: 1, borderColor: C.line }}>
           <IconSearch size={18} color={C.mute} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Cari produk atau SKU…" placeholderTextColor={C.mute} accessibilityLabel="Cari produk" style={{ flex: 1, padding: 14, color: C.text, fontSize: 14 }} />
+          <TextInput value={q} onChangeText={setQ} placeholder="Cari nama produk atau SKU..." placeholderTextColor={C.mute} accessibilityLabel="Cari produk" returnKeyType="search" style={{ flex: 1, padding: 13, color: C.text, fontSize: 14 }} />
         </View>
-        <T s={11} c={C.mute}>{items.length} produk tersedia • {count} item di keranjang</T>
-        {!!notice && <T s={11} c={notice.includes('berhasil') ? C.green : C.amber}>{notice}</T>}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <T s={11} c={C.mute}>{list.length} dari {items.length} produk</T>
+          <T s={11} c={C.mute}>Harga dalam mata uang toko</T>
+        </View>
+        {!!notice && <View style={{ backgroundColor: notice.includes('berhasil') ? '#064E3B' : '#422006', borderRadius: 10, padding: 10 }}><T s={11} c={notice.includes('berhasil') ? '#A7F3D0' : '#FDE68A'}>{notice}</T></View>}
       </View>
-      <FlatList data={list} numColumns={2} keyExtractor={(p) => String(p.id)} contentContainerStyle={{ padding: 14, paddingBottom: 110 }} renderItem={renderItem} extraData={cart}
+      <FlatList data={list} keyExtractor={(p) => String(p.id)} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 130, gap: 9 }} renderItem={renderItem} extraData={cart}
         ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40 }}><T c={C.mute}>{q ? 'Produk tidak ditemukan' : 'Belum ada produk'}</T></View>} />
-      {count > 0 && (
-        <View style={{ position: 'absolute', left: 16, right: 16, bottom: 12, backgroundColor: C.green, borderRadius: 24, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View><T s={10} c="#D1FAE5">TOTAL PAYABLE • {count} item</T><T s={20} w="800">{money(total)}</T></View>
-          <TouchableOpacity onPress={() => { setNotice(''); setPaymentOpen(true); }} disabled={paying} style={{ backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 20, paddingVertical: 12, opacity: paying ? 0.5 : 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <T w="700" c={C.green}>Checkout</T><IconArrowRight size={16} color={C.green} />
-          </TouchableOpacity>
+      <View style={{ position: 'absolute', left: 14, right: 14, bottom: 10, backgroundColor: count > 0 ? C.green : C.card, borderWidth: count > 0 ? 0 : 1, borderColor: C.line, borderRadius: 18, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <T s={10} c={count > 0 ? '#D1FAE5' : C.mute} w="700">{count > 0 ? `KERANJANG · ${count} UNIT` : 'KERANJANG KOSONG'}</T>
+          <T s={19} w="800" c={count > 0 ? '#06281F' : C.text}>{money(total)}</T>
         </View>
-      )}
+        <TouchableOpacity onPress={() => { setNotice(''); setCartOpen(true); }} disabled={paying || count === 0}
+          style={{ backgroundColor: count > 0 ? '#FFFFFF' : C.line, borderRadius: 12, paddingHorizontal: 15, paddingVertical: 11, opacity: count > 0 && !paying ? 1 : 0.65, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <T w="700" c={count > 0 ? C.green : C.mute}>{count > 0 ? 'Periksa pesanan' : 'Pilih produk'}</T>
+          <IconArrowRight size={15} color={count > 0 ? C.green : C.mute} />
+        </TouchableOpacity>
+      </View>
+      <Modal visible={cartOpen} transparent animationType="slide" onRequestClose={() => setCartOpen(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.65)' }}>
+          <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, gap: 14, borderWidth: 1, borderColor: C.line, maxHeight: '82%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View><T s={20} w="800">Keranjang</T><T s={11} c={C.mute}>{count} unit · Periksa pesanan sebelum bayar</T></View>
+              <TouchableOpacity onPress={() => setCartOpen(false)}><T c={C.mute}>Tutup</T></TouchableOpacity>
+            </View>
+            <FlatList data={lines} keyExtractor={(item) => String(item.id)} style={{ flexGrow: 0 }} renderItem={({ item }) => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line }}>
+                <View style={{ flex: 1, gap: 3 }}><T w="700">{item.name}</T><T s={11} c={C.mute}>{money(item.price)} per unit</T></View>
+                <TouchableOpacity onPress={() => sub(item)} accessibilityLabel={`Kurangi ${item.name}`} style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' }}><IconMinus color={C.text} size={16}/></TouchableOpacity>
+                <T w="800">{cart[item.id]}</T>
+                <TouchableOpacity onPress={() => add(item)} accessibilityLabel={`Tambah ${item.name}`} style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' }}><IconPlus color={C.green} size={16}/></TouchableOpacity>
+              </View>
+            )} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6 }}><T s={14} w="700">Total pesanan</T><T s={22} w="800" c={C.green}>{money(total)}</T></View>
+            <TouchableOpacity disabled={!count} onPress={() => { setCartOpen(false); setPaymentOpen(true); }} style={{ backgroundColor: C.green, borderRadius: 14, padding: 15, alignItems: 'center', opacity: count ? 1 : 0.5 }}><T w="800" c="#06281F">Lanjut ke pembayaran</T></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <Modal visible={paymentOpen} transparent animationType="slide" onRequestClose={() => !paying && setPaymentOpen(false)}>
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.65)' }}>
           <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 22, gap: 14, borderWidth: 1, borderColor: C.line }}>

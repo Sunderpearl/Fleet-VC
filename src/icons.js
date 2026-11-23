@@ -2,6 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard,
   Receipt,
+  History,
   Package,
   User,
   Plus,
@@ -28,6 +29,10 @@ export const IconDashboard = ({ size = 20, color = C.text, strokeWidth = 2, ...p
 
 export const IconPOS = ({ size = 20, color = C.text, strokeWidth = 2, ...p }) => (
   <Receipt size={size} color={color} strokeWidth={strokeWidth} {...p} />
+);
+
+export const IconHistory = ({ size = 20, color = C.text, strokeWidth = 2, ...p }) => (
+  <History size={size} color={color} strokeWidth={strokeWidth} {...p} />
 );
 
 export const IconInventory = ({ size = 20, color = C.text, strokeWidth = 2, ...p }) => (

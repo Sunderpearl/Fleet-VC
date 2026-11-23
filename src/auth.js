@@ -33,7 +33,17 @@ export function AuthProvider({ children }) {
 
   const value = {
     user, ready, biometric: restore,
+    updateProfile: async (changes) => {
+      const raw = await storage.getItem('session');
+      if (!raw) throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
+      const session = JSON.parse(raw);
+      const nextUser = { ...session.user, ...changes };
+      await storage.setItem('session', JSON.stringify({ ...session, user: nextUser }));
+      setUser(nextUser);
+      return nextUser;
+    },
     signIn: async (b) => save(await api.login(b)),
+    signUp: async (b) => { if (!MOCK) throw new Error('Registrasi perlu endpoint backend.'); return save(await api.register(b)); },
     google: async () => {
       if (MOCK) return save(await api.login({}));
       const r = await WebBrowser.openAuthSessionAsync(`${API_URL}/auth/google`, Linking.createURL('auth'));

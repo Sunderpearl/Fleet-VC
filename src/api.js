@@ -81,26 +81,91 @@ async function req(path, { method = 'GET', body, auth = true } = {}) {
 }
 
 const P = [
-  { id: '1', sku: 'SKU-9902', name: 'Tech-Shell Parka', price: 450000, stock: 48 },
-  { id: '2', sku: 'SKU-6412', name: 'Urban Runner 2.0', price: 899000, stock: 6 },
-  { id: '3', sku: 'SKU-2201', name: 'Aviator Pro Polarized', price: 320000, stock: 29 },
-  { id: '4', sku: 'SKU-1180', name: 'Pro Studio Headphones', price: 249000, stock: 9 },
-  { id: '5', sku: 'SKU-3305', name: 'Sandalwood Candle', price: 34500, stock: 80 },
-  { id: '6', sku: 'SKU-4410', name: 'Heritage Leather Wallet', price: 189000, stock: 2 },
+  { id: '1', sku: 'SKU-9902', name: 'Tech-Shell Parka', price: 450000, stock: 48, lowStockAt: 10 },
+  { id: '2', sku: 'SKU-6412', name: 'Urban Runner 2.0', price: 899000, stock: 6, lowStockAt: 10 },
+  { id: '3', sku: 'SKU-2201', name: 'Aviator Pro Polarized', price: 320000, stock: 29, lowStockAt: 10 },
+  { id: '4', sku: 'SKU-1180', name: 'Pro Studio Headphones', price: 249000, stock: 9, lowStockAt: 10 },
+  { id: '5', sku: 'SKU-3305', name: 'Sandalwood Candle', price: 34500, stock: 80, lowStockAt: 10 },
+  { id: '6', sku: 'SKU-4410', name: 'Heritage Leather Wallet', price: 189000, stock: 2, lowStockAt: 10 },
 ];
+const readLocal = async (key, fallback) => {
+  const raw = await storage.getItem(key);
+  if (raw == null) return fallback;
+  try { return JSON.parse(raw); } catch { return fallback; }
+};
+const writeLocal = (key, value) => storage.setItem(key, JSON.stringify(value));
+const seedLocal = async () => {
+  const products = await storage.getItem('fleet_products');
+  if (!products) await writeLocal('fleet_products', P);
+  const stores = await storage.getItem('fleet_stores');
+  if (!stores) await writeLocal('fleet_stores', [{ id: 's1', name: 'Fleet Demo Store', currency: 'IDR' }]);
+};
 const mock = {
-  login: async (b) => ({ user: { name: 'Jameson Reed', role: b.role || 'OWNER' }, access: 'm', refresh: 'm' }),
-  products: async () => P,
-  stores: async () => [{ id: 's1', name: 'Flagship Store' }],
-  order: async (b) => b,
-  summary: async () => ({
-    revenue: 14290450, orders: 184, aov: 77660,
-    hourly: [0, 0, 0, 0, 0, 0, 0, 0, 900, 1500, 2400, 2900, 2300, 1700, 1500, 1900, 3200, 5800, 8200, 6900, 4800, 2900, 1200, 0].map((v) => v * 1000),
-    topSkus: [{ ...P[0], sold: 48, revenue: 2480000 }, { ...P[1], sold: 32, revenue: 4160000 }, { ...P[2], sold: 29, revenue: 1980000 }],
-  }),
+  login: async (b) => {
+    await seedLocal();
+    const users = await readLocal('fleet_users', []);
+    const email = String(b.email || '').trim().toLowerCase();
+    const user = users.find((u) => u.email === email && u.password === b.password);
+    if (!user) throw new Error('Email atau password salah. Silakan daftar akun terlebih dahulu.');
+    const { password, ...safeUser } = user;
+    return { user: safeUser, access: 'local-session', refresh: 'local-session' };
+  },
+  register: async (b) => {
+    await seedLocal();
+    const users = await readLocal('fleet_users', []);
+    const email = String(b.email || '').trim().toLowerCase();
+    if (users.some((u) => u.email === email)) throw new Error('Email sudah terdaftar. Silakan masuk.');
+    const user = { id: `u-${Date.now()}`, name: String(b.name || '').trim(), email, role: b.role || 'OWNER', password: b.password, createdAt: new Date().toISOString() };
+    if (!user.name || !email || !b.password) throw new Error('Nama, email, dan password wajib diisi.');
+    await writeLocal('fleet_users', [...users, user]);
+    const { password, ...safeUser } = user;
+    return { user: safeUser, access: 'local-session', refresh: 'local-session' };
+  },
+  products: async () => { await seedLocal(); return readLocal('fleet_products', P); },
+  saveProducts: async (items) => writeLocal('fleet_products', items),
+  stores: async () => { await seedLocal(); return readLocal('fleet_stores', [{ id: 's1', name: 'Fleet Demo Store' }]); },
+  saveStores: async (items) => writeLocal('fleet_stores', items),
+  order: async (b) => {
+    await seedLocal();
+    const products = await readLocal('fleet_products', P);
+    const transactions = await readLocal('fleet_transactions', []);
+    const lines = (b.items || []).map((line) => {
+      const product = products.find((x) => x.id === line.productId);
+      if (!product) throw new Error('Produk tidak ditemukan.');
+      if (product.stock < line.qty) throw new Error(`Stok ${product.name} tidak mencukupi.`);
+      return { productId: product.id, sku: product.sku, name: product.name, price: Number(product.price), qty: Number(line.qty), subtotal: Number(product.price) * Number(line.qty) };
+    });
+    const total = lines.reduce((sum, line) => sum + line.subtotal, 0);
+    const updated = products.map((product) => {
+      const sold = lines.find((line) => line.productId === product.id);
+      return sold ? { ...product, stock: product.stock - sold.qty } : product;
+    });
+    const transaction = { id: `TRX-${Date.now()}`, createdAt: new Date().toISOString(), storeId: b.storeId || 's1', paymentMethod: b.paymentMethod || 'CASH', items: lines, total, status: 'COMPLETED' };
+    await writeLocal('fleet_products', updated);
+    await writeLocal('fleet_transactions', [transaction, ...transactions]);
+    return transaction;
+  },
+  transactions: async () => readLocal('fleet_transactions', []),
+  summary: async () => {
+    const products = await mock.products();
+    const transactions = await mock.transactions();
+    const today = new Date().toDateString();
+    const todays = transactions.filter((t) => new Date(t.createdAt).toDateString() === today);
+    const revenue = todays.reduce((sum, t) => sum + t.total, 0);
+    const sold = {};
+    todays.forEach((t) => t.items.forEach((line) => { sold[line.productId] = (sold[line.productId] || 0) + line.qty; }));
+    const topSkus = Object.entries(sold).map(([id, qty]) => {
+      const product = products.find((p) => p.id === id) || {};
+      return { ...product, sold: qty, revenue: qty * Number(product.price || 0) };
+    }).sort((a, b) => b.sold - a.sold).slice(0, 5);
+    const hourly = Array(24).fill(0);
+    todays.forEach((t) => { hourly[new Date(t.createdAt).getHours()] += t.total; });
+    return { revenue, orders: todays.length, aov: todays.length ? Math.round(revenue / todays.length) : 0, hourly, topSkus };
+  },
 };
 const real = {
   login: (b) => req('/auth/login', { method: 'POST', body: b, auth: false }),
+  register: (b) => req('/auth/register', { method: 'POST', body: b, auth: false }),
   me: () => req('/auth/me'),
   products: () => req('/api/products'),
   stores: () => req('/api/stores'),
@@ -108,6 +173,7 @@ const real = {
   order: (b) => req('/api/orders', { method: 'POST', body: b }),
 };
 export const api = MOCK ? mock : real;
+export const localData = MOCK ? mock : null;
 
 // ---- POS offline-first: antre lokal + sinkron otomatis (clientId = idempotent di server) ----
 export async function sendOrder(o) {
